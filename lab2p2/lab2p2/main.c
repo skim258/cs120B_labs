@@ -2,7 +2,7 @@
  * lab2p2.c
  *
  * Created: 7/31/2018 2:04:25 PM
- * Author : ucrcse
+ * Author : Siwon Kim, Daniel Li
  */ 
 
 #include <avr/io.h>
@@ -24,20 +24,22 @@ int main(void)
 		unsigned char tmpC = 0x3F;
 		//unsigned char fuelC
 		if (fuelA < 13){
-			tmpC = tmpC & 0xDF;
+			tmpC = SetBit(tmpC,5,0);
 			if (fuelA <10){
-				tmpC = tmpC & 0xEF;
+				tmpC = SetBit(tmpC,4,0);
 				if (fuelA <7){
-					tmpC = tmpC & 0xF7;
+					tmpC = SetBit(tmpC,3,0);
 					if (fuelA < 5){
-						tmpC = tmpC & 0xFB;
+						tmpC = SetBit(tmpC,2,0);
+						tmpC = SetBit(tmpC,6,1);
 						if (fuelA < 3){
-							tmpC = tmpC & 0xFD;
+							tmpC = SetBit(tmpC,1,0);
 						}
 					}
 				}
 			} 
 		  }
+			
 			PORTC = tmpC;
 		}
 }
