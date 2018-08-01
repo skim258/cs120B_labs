@@ -24,15 +24,15 @@ int main(void)
 		unsigned char tmpC = 0x3F;
 		//unsigned char fuelC
 		if (fuelA < 13){
-			SetBit(tmpC,5,0);
+			tmpC = tmpC & 0xDF;
 			if (fuelA <10){
-				SetBit(tmpC,4,0);
+				tmpC = tmpC & 0xEF;
 				if (fuelA <7){
-					SetBit(tmpC,3,0);
+					tmpC = tmpC & 0xF7;
 					if (fuelA < 5){
-						SetBit(tmpC,2,0);
+						tmpC = tmpC & 0xFB;
 						if (fuelA < 3){
-							SetBit(tmpC,1,0);
+							tmpC = tmpC & 0xFD;
 						}
 					}
 				}
