@@ -2,7 +2,7 @@
  * lab2p1.c
  *
  * Created: 7/31/2018 1:23:05 PM
- * Author : ucrcse
+ * Author : Siwon Kim, Daniel Li
  */ 
 
 #include <avr/io.h>

@@ -2,7 +2,7 @@
  * lab02_part5.c
  *
  * Created: 8/1/2018 12:29:53 PM
- * Author : Daniel
+ * Author : Siwon Kim, Daniel Li
  */ 
 
 #include <avr/io.h>

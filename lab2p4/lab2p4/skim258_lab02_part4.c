@@ -1,4 +1,4 @@
-/*
+/*by Siwon Kim, Daniel Li
  * lab02_part4.c
  */
 

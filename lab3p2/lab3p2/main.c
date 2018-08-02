@@ -7,58 +7,90 @@
 
 #include <avr/io.h> 
 
-enum led_states{init,wait01, pb1,wait10, wait11, pb0, wait00}led_state;
+enum c_val{init, wait0, dec_wait, decC, incC, inc_wait,clr_c}operateC;
 	
-	void led_list(){
-	  unsigned char button = PINA & 0x01;
-	  unsigned char tmpB = 0x00;
- 		switch(led_state){
+	void changeC(){
+	  unsigned char pa0 = PINA & 0x01;
+	  unsigned char pa1 = PINA & 0x02;
+ 		 switch(operateC){
 			case init:
-				PORTB = tmpB | 0x01;		//first led on
-				led_state = wait01;
+				PORTC = 7;
+				operateC = wait0;
 			break;
 			
-			case wait01:
-				if (button)
+			case wait0:
+				if (PINA == 3)   //if both on
 				{
-					led_state = pb1;
+					operateC = clr_c;
+				}
+				else if(PINA == 1) //inc_state
+				{
+					operateC = incC;
+				}
+				else if (PINA == 2) //dec_state
+				{
+					operateC = decC;
 				}
 				else{
-					led_state = wait01;
+					//do nothing
 				}
 			break;
 			
-			case pb1:
-				led_state = wait10;
-				PORTB = tmpB | 0x02;   //2nd led on
-			break;
-			
-			case wait10:
-				if(!button){
-					led_state = wait11;
-				}
-			break;
-
-			case wait11:
-				if(button){
-					led_state = pb0;
-				}
-			break;
-			
-			case pb0:
-				led_state = wait00;
-				PORTB = tmpB | 0x01; //1st led on
-			break;
-
-			case wait00:
-				if (!button)
+			case dec_wait:
+				if (PINA == 0)
 				{
-					led_state = wait01;
+					operateC = wait0;
+				}
+				else if (PINA == 3)
+				{
+					operateC = clr_c;
+				}
+				else{
+					//whatever
 				}
 			break;
-
+			
+			case decC:
+				if (PORTC > 0)
+				{
+					PORTC--;
+				}
+				operateC = dec_wait;
+			break;
+				
+			case incC:
+				if (PORTC < 9)
+				{
+					PORTC++;
+				}
+				operateC = dec_wait;
+			break;
+			
+			case inc_wait:
+				if (PINA == 0)
+				{
+					operateC = wait0;
+				}
+				else if (PINA == 3)
+				{
+					operateC = clr_c;
+				}
+				else{
+					//whatever
+				}
+			break;
+			
+			case clr_c:
+			PORTC = 0;
+			if (PINA != 3)
+			{
+				operateC = wait0;
+			}
+			
+			break;
+			
 			default:
-			led_state = init;
+			operateC = wait0;
 			break;
 			}
 		return;
@@ -67,10 +99,10 @@ int main(void)
 {
     /* Replace with your application code */
 	DDRA = 0x00; PORTA = 0xFF; 
-	DDRB = 0xFF; PORTB = 0x00; 
+	DDRC = 0xFF; PORTC = 0x00; 
     while (1) 
     {
-		led_list();
+		changeC();
     }
 }
 
