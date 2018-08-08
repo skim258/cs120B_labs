@@ -1,6 +1,8 @@
 /*
  * lab04_part1.c
+ * By: Siwon Kim, Daniel Li
  */
+
 
 #include <avr/io.h>
 
