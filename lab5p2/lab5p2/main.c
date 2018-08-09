@@ -136,4 +136,3 @@ int main(void)
 		// This example just illustrates the use of the ISR and flag
 	}
 }
-
