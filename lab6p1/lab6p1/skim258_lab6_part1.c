@@ -2,13 +2,13 @@
  * lab06_part1.c
  *
  * Created: 8/9/2018 2:14:54 PM
- * Author : Daniel
+ * Author : Daniel,Siwon
  */ 
 
 
 #include <avr/io.h>
 #include "io.c"
-#include "timer.c"
+#include "timer.c" //Timer function being the synchronous file given in lab 5 
 
 void Tick(unsigned char *prev);
 
