@@ -14,9 +14,10 @@ void ThreeLED_Tick() {
 		break;
 		
 		case ONE:
-			if(tmpB < 3){
-			PORTB =  B3 | (tmpB << 1);
-			tmpB = tmpB << 1;
+		tmpB = tmpB << 1;
+			if(tmpB < 5){
+			PORTB =  B3 | (tmpB);
+		
 		}
 		if((tmpB << 1) > 5){
 		ThreeLED_State = TWO;
@@ -32,13 +33,9 @@ void ThreeLED_Tick() {
 	}
 }
 
-enum BlinkingLED_States { BlinkingLED_Start, OFF, ON } BlinkingLED_State;
+enum BlinkingLED_States { OFF, ON } BlinkingLED_State;
 void BlinkingLED_Tick() {
 	switch(BlinkingLED_State) {
-		case BlinkingLED_Start:
-		//PORTB = 0;
-		BlinkingLED_State = OFF;
-		break;
 		
 		case OFF:
 		PORTB = PORTB & 0xF7;
