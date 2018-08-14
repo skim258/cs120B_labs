@@ -2,11 +2,11 @@
  * lab05_part1.c
  *
  * Created: 8/7/2018 1:22:22 PM
- * Author : Daniel
+ * Author : Daniel Li, Siwon Kim
  */ 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#define A0 (~PINA & 0x01)
+
 volatile unsigned char TimerFlag = 0; // TimerISR() sets this to 1. C programmer should clear to 0.
 
 // Internal variables for mapping AVR's ISR to our cleaner TimerISR model.
@@ -63,7 +63,7 @@ void TimerSet(unsigned long M) {
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 
-enum PORTB_states { INIT, ONE, TWO, THREE, right_press, wait_reset } PORTB_State;
+enum PORTB_states { INIT, ONE, TWO, THREE } PORTB_State;
 
 void PORTB_Tick() {
 	//B0 = 0x01; B1 = 0x02; B2 = 0x04;
@@ -77,39 +77,16 @@ void PORTB_Tick() {
 		case ONE:
 		PORTC = 0x01;
 		PORTB_State = TWO;
-		if (A0)
-		{
-			PORTB_State = right_press;
-			
-		}
 		break;
 		
 		case TWO:
 		PORTC = 0x02;
 		PORTB_State = THREE;
-		if (A0)
-		{
-			PORTB_State = right_press;
-			
-		}
 		break;
 		
 		case THREE:
 		PORTC = 0x04;
 		PORTB_State = ONE;
-		if (A0)
-		{
-			PORTB_State = right_press;
-			
-		}
-		break;
-		
-		case right_press :
-			PORTB_State  = A0 ? right_press : wait_reset;
-		break;
-		
-		case wait_reset : 
-			PORTB_State = !A0 ? wait_reset : ONE;
 		break;
 	}
 	
@@ -120,19 +97,19 @@ int main(void)
 {
 	DDRC = 0xFF; // Set port B to output
 	PORTC = 0x00; // Init port B to 0s
-	DDRA = 0x00; PORTA = 0xFF;
-	TimerSet(38);
+	TimerSet(125);
 	TimerOn();
 //	unsigned char tmpB = 0x00;
-//	PORTB_State = ONE;
+	PORTB_State = ONE;
 	while(1) {
 		// User code (i.e. synchSM calls)
 //		tmpB = ~tmpB;	// Toggle PORTB; Temporary, bad programming style
 //		PORTB = tmpB;
 		PORTB_Tick();
-	    while (!TimerFlag);	// Wait 1 sec
+		while (!TimerFlag);	// Wait 1 sec
 		TimerFlag = 0;
 		// Note: For the above a better style would use a synchSM with TickSM()
 		// This example just illustrates the use of the ISR and flag
 	}
 }
+
