@@ -1,50 +1,46 @@
-/*
- * lab07_part1.c
- *
- * Cated: 8/13/2018 1:47:27 PM
- * Author : Daniel
- */ 
 
+// By Siwon Kim, Daniel Li
 #include <avr/io.h>
 //#include "RIMS.h"
 #include "timer.c"
+#define B3 (PORTB & 0x08)
+unsigned char tmpB = 1;
+enum ThreeLED_States { ThreeLED_Start, ONE, TWO } ThreeLED_State;
 
-enum ThreeLED_States { ThreeLED_Start, ONE, TWO, THREE } ThreeLED_State;
-	
 void ThreeLED_Tick() {
 	switch(ThreeLED_State) {
+		
 		case ThreeLED_Start:
-		PORTB = 0x00;
 		ThreeLED_State = ONE;
+		PORTB = tmpB;
 		break;
 		
 		case ONE:
-		PORTB = 0x01;
+		tmpB = tmpB << 1;
+			if(tmpB < 5){
+			PORTB =  B3 | (tmpB);
+		
+		}
+		if((tmpB << 1) > 5){
 		ThreeLED_State = TWO;
+		}
 		break;
 		
 		case TWO:
-		PORTB = 0x02;
-		ThreeLED_State = THREE;
-		break;
-		
-		case THREE:
-		PORTB = 0x04;
+		tmpB = 1;
+		PORTB = (B3 | tmpB);
 		ThreeLED_State = ONE;
 		break;
+		
 	}
 }
 
-enum BlinkingLED_States { BlinkingLED_Start, OFF, ON } BlinkingLED_State;
+enum BlinkingLED_States { OFF, ON } BlinkingLED_State;
 void BlinkingLED_Tick() {
 	switch(BlinkingLED_State) {
-		case BlinkingLED_Start:
-		//PORTB = 0;
-		ThreeLED_State = OFF;
-		break;
 		
 		case OFF:
-		PORTB = PORTB | 0x00;
+		PORTB = PORTB & 0xF7;
 		BlinkingLED_State = ON;
 		break;
 		
@@ -55,19 +51,21 @@ void BlinkingLED_Tick() {
 	}
 }
 
+
+
+
 int main(void) {
 	DDRB = 0xFF; PORTB = 0x00;
-	 
+	
 	unsigned long ThreeLED_elapsedTime = 0;
 	unsigned long BlinkingLED_elapsedTime = 0;
-	const unsigned long timerPeriod = 125;
+	const unsigned long timerPeriod = 12;
 	//B = 0;
-	TimerSet(125);
+	TimerSet(timerPeriod);
 	TimerOn();
-	ThreeLED_State = ONE;
-	BlinkingLED_State = OFF;
+
 	while (1) {
-		if (ThreeLED_elapsedTime >= 125) {
+		if (ThreeLED_elapsedTime >= 38) {
 			ThreeLED_Tick();
 			ThreeLED_elapsedTime = 0;
 		}
@@ -78,6 +76,7 @@ int main(void) {
 		}
 		while (!TimerFlag){} // Wait for timer period
 		TimerFlag = 0; // Lower flag raised by timer
+
 
 		ThreeLED_elapsedTime += timerPeriod;
 		BlinkingLED_elapsedTime += timerPeriod;
