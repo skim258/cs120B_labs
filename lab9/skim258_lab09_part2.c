@@ -1,10 +1,9 @@
 /*
- * GccApplication1.c
- *
- * Created: 8/18/2018 2:03:27 PM
- * Author : sk
+ * lab9_part2.c
+ * Name: Siwon Kim
+ * Partner: Daniel Li
  */ 
-
+#include "timer.c"
 #include <avr/io.h>
 #define A0 (~PINA & 0x01)
 #define A1 (~PINA & 0x02)
@@ -12,9 +11,8 @@
 
 unsigned char freq_choice = 0;
 enum bool {false, true} music_on;
-// 0.954 hz is lowest frequency possible with this function,
-// based on settings in PWM_on()
-// Passing in 0 as the frequency will stop the speaker from generating sound
+	
+
 void set_PWM(double frequency) {
 	static double current_frequency; // Keeps track of the currently set frequency
 	
@@ -32,7 +30,7 @@ void set_PWM(double frequency) {
 		else if (frequency > 31250) { OCR3A = 0x0000; }
 
 		// set OCR3A based on desired frequency
-		else { OCR3A = (short)(8000000 / (128 * frequency)) + 1; }
+		else { OCR3A = (short)(8000000 / (128 * frequency)) - 1; }
 		
 		TCNT3 = 0; // resets counter
 		current_frequency = frequency; // Updates the current frequency
@@ -53,6 +51,8 @@ void PWM_off() {
 	TCCR3B = 0x00;
 }
 
+
+
 enum switchstates {init_switch, off_switch, on_switch, wait_switchON, wait_switchOFF}switch_state;
 void switch_tick(){
 	switch(switch_state){
@@ -63,23 +63,33 @@ void switch_tick(){
 		
 		case off_switch:
 		music_on = false;
-				switch_state = wait_switchOFF;
-	
+		if (A0)
+		{
+			switch_state = wait_switchOFF;
+		}
+		else{
+			switch_state = off_switch;
+		}
 		break;
 		
 		case wait_switchOFF:
 		if (A0)
 		{
-			switch_state = on_switch;
+			switch_state = wait_switchOFF;
 		}
 		else{
-			switch_state = wait_switchOFF;
+			switch_state = on_switch;
 		};
 		break;
 		
 		case on_switch:
-			music_on = true;
-				switch_state = wait_switchON;
+		music_on = true;
+		if(A0){
+		switch_state = wait_switchON;
+		}
+		else{
+			switch_state = on_switch;
+		}
 		break;
 		
 		case wait_switchON:
@@ -95,106 +105,123 @@ void switch_tick(){
 		set_PWM(0);
 		break;
 	}
-	};
+};
+
 void freq_option(){
 	if (freq_choice == 0)
 	{
-		set_PWM(2163.33);
+		set_PWM(261.63);
 	}
 	else if (freq_choice == 1)
 	{
-		set_PWM(2498.33);
+		set_PWM(293.66);
 	}
 	else if (freq_choice == 2)
 	{
-		set_PWM(2840.55);
+		set_PWM(329.63);
 	}
 	else if (freq_choice == 3)
 	{
-		set_PWM(3100.55);
+		set_PWM(349.23);
 	}
 	else if (freq_choice == 4)
 	{
-		set_PWM(3440.55);
+		set_PWM(392.00);
 	}
 	else if (freq_choice == 5)
 	{
-		set_PWM(3830.55);
+		set_PWM(440.00);
 	}
 	else if (freq_choice == 6)
 	{
-		set_PWM(4390.55);
+		set_PWM(493.88);
 	}
-	
+	else if (freq_choice == 7)
+	{
+		set_PWM(523.25);
+	}
 }
-	
+
 enum freq_states{init_freq, setCurr_freq, inc_freq, wait_incFreq, dec_freq, wait_decFreq} freq_state;
-	void setFreq_tick(){
-		switch(freq_state){
-			case init_freq:
-			set_PWM(0);
-			freq_state = setCurr_freq;
-			break;
-			
-			case setCurr_freq:
-				if (A2 && ~A1 && (music_on == true))
-				{
-					freq_state = inc_freq;
-				}
-				else if (~A2 && A1 && (music_on == true))
-				{
-					freq_state = dec_freq;
-				}
-				else{
-					freq_state = setCurr_freq;
-				}
-			break;
-			
-			case inc_freq:
-			freq_choice++;
-			freq_option();
-			freq_state = wait_incFreq;
-			break;
-			
-			case wait_incFreq:
-			if (A2)
-			{
-				freq_state = wait_incFreq;
-			}
-			else{
-				freq_state = setCurr_freq;
-			}
-			break;
-			
-			case dec_freq:
-			freq_choice--;
-			freq_option();
-			freq_state = wait_decFreq;
-			break;
-			
-			case wait_decFreq:
-			if (A1)
-			{
-				freq_state = wait_decFreq;
-			}
-			else{
-				freq_state = setCurr_freq;
-			}
-			break;
+void setFreq_tick(){
+	switch(freq_state){
+		case init_freq:
+		set_PWM(0);
+		freq_state = setCurr_freq;
+		break;
+		
+		case setCurr_freq:
+		freq_option();
+		if (A2 && ~A1 && music_on)
+		{
+			freq_state = inc_freq;
 		}
+		else if (~A2 && A1 && music_on)
+		{
+			freq_state = dec_freq;
+		}
+		else if (music_on){
+			freq_state = setCurr_freq;
+		}
+		else if (!music_on){
+			set_PWM(0);
+		}
+		break;
+		
+		case inc_freq:
+		if (freq_choice < 7){
+			freq_choice++;
+		}
+		freq_option();
+		freq_state = wait_incFreq;
+		break;
+		
+		case wait_incFreq:
+		if (A2)
+		{
+			freq_state = wait_incFreq;
+		}
+		else{
+			freq_state = setCurr_freq;
+		}
+		break;
+		
+		case dec_freq:
+		if (freq_choice > 0){
+			freq_choice--;
+		}
+		freq_option();
+		freq_state = wait_decFreq;
+		break;
+		
+		case wait_decFreq:
+		if (A1)
+		{
+			freq_state = wait_decFreq;
+		}
+		else{
+			freq_state = setCurr_freq;
+		}
+		break;
 	}
+}
 
 
 int main(void)
 {
 	PWM_on();
-	 DDRA = 0x00; PORTA = 0xFF;
-	 DDRB = 0xFF; PORTB = 0x00;
-    /* Replace with your application code */
-    while (1) 
-    {
+	TimerSet(10);
+	TimerOn();
+	DDRA = 0x00; PORTA = 0xFF;
+	DDRB = 0xFF; PORTB = 0x00;
+	/* Replace with your application code */
+	while (1)
+	{
+		
 		switch_tick();
 		setFreq_tick();
-    }
-}
 
+		while (!TimerFlag);
+		TimerFlag = 0;
+	}
+}

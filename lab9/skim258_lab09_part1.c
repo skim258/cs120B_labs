@@ -1,11 +1,13 @@
 /*
- * lab9p1.c
- *
- * Created: 8/16/2018 6:43:27 PM
- * Author : Siwon Kim
+ * lab9_part1.c
+ * Name: Siwon Kim
+ * Partner: Daniel Li
  */ 
 
 #include <avr/io.h>
+#define A0 (~PINA & 0x01)
+#define A1 (~PINA & 0x02)
+#define A2 (~PINA & 0x04)
 
 void set_PWM(double frequency) {
 	static double current_frequency; // Keeps track of the currently set frequency
@@ -45,104 +47,29 @@ void PWM_off() {
 	TCCR3B = 0x00;
 }
 
-enum States{init, wait, on, off}state;
-unsigned char choose;
-unsigned char flag;	// 1 = C, 2 = D, 3 = E
-
-void tick(){
-	choose = ~PINA & 0x07;
-	switch(state){
-		case init:
-		//PORTB = 0x00;
-		state = wait;
-		break;
-		
-		case wait:
-		if(choose == 0x01){
-			//flag = 1;
-			//set_PWM(261.63);
-			state = on;
-			}else if(choose == 0x02){
-			//flag = 2;
-			//set_PWM(293.66);
-			state = on;
-			}else if(choose == 0x04){
-			//flag = 3;
-			//set_PWM(329.63);
-			state = on;
-			}else{
-			//flag = 0;
-			//set_PWM(0);
-			state = off;
-		}
-		break;
-		
-		case on:
-		//PWM_on();
-		//PORTB = 0x40;
-		if(choose == 0x01){
-			//set_PWM(261.63);
-			state = on;
-			}else if(choose == 0x02){
-			//set_PWM(293.66);
-			state = on;
-			}else if(choose == 0x04){
-			//set_PWM(329.63);
-			state = on;
-			}else{
-			state = off;
-		}
-		break;
-		
-		case off:
-		//PWM_off();
-		//PORTB = 0x00;
-		//set_PWM(0);
-		state = wait;
-		break;
-		
-		default:
-		break;
-	}
-	
-	switch(state){
-		case init:
-		break;
-		
-		case wait:
-		set_PWM(0);
-		break;
-		
-		case on:
-		if(choose == 0x01){
-			set_PWM(261.63);
-			}else if(choose == 0x02){
-			set_PWM(293.66);
-			}else if(choose == 0x04){
-			set_PWM(329.63);
-			}else{
-			set_PWM(0);
-		}
-		break;
-		
-		case off:
-		set_PWM(0);
-		break;
-	}
-}
 
 int main(void)
 {
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	
-	state = init;
 	PWM_on();
 	
-	while (1)
+	while(1)
 	{
-		//PWM_on();
-		tick();
+		if (A0) {
+			set_PWM(261.63);
+		}
+		else if (A1) {
+			set_PWM(293.66);
+		}
+		else if (A2) {
+			set_PWM(329.63);
+			
+		}
+		else {
+			set_PWM(0);//do nothing
+		}
 	}
 }
 
