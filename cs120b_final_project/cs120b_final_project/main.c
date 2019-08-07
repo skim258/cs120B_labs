@@ -32,8 +32,8 @@ unsigned char led_rowPos[] = {0x01,0x04,0x10,0x40};
 unsigned char currObj;
 unsigned char game_lost = 0;
 unsigned char lives = 3;			//lives is 2 but concerning deplay 2+1 = 3;
-unsigned char plyr2_arr[] = {0xFE, 0x7F};
-unsigned char cntrVal = 50;
+unsigned char bad_xvals[] = {0x1F, 0x8F, 0xC7, 0xE3, 0xF1, 0xF8}; // size = 6
+
 enum playr_states{init_plyr, move_playr};
 int playr_char_sm(int state){
 	static unsigned char cntr = 0; //cntr to slow down button
@@ -48,19 +48,19 @@ int playr_char_sm(int state){
 		
 		break;
 		case move_playr:
-		if(plyr_pos == 0x7F && right_button && cntr >= cntrVal){
+		if(plyr_pos == 0x7F && right_button){
 			plyr_pos = 0xFE;
 			cntr = 0;
 		}
-		else if(plyr_pos == 0xFE && left_button && !right_button && cntr >=cntrVal){
+		else if(plyr_pos == 0xFE && left_button && !right_button){
 			plyr_pos = 0x7F;
 			cntr = 0;
 		}
-		else if(right_button && !left_button && cntr >=cntrVal){
+		else if(right_button && !left_button){
 			plyr_pos = (plyr_pos << 1) | 1;
 			cntr = 0; 
 		}
-		else if(!right_button && left_button && cntr >=cntrVal){
+		else if(!right_button && left_button){
 			plyr_pos = (plyr_pos >> 1) | 0x80;
 			cntr = 0;
 		}
@@ -95,19 +95,19 @@ int playr_char_sm2(int state){
 		
 		break;
 		case move_playr2:
-		if(plyr_pos2 == 0x7F && right_button2 && cntr >=cntrVal/2){
+		if(plyr_pos2 == 0x7F && right_button2){
 			plyr_pos2 = 0xFE;
 			cntr = 0;
 		}
-		else if(plyr_pos2 == 0xFE && left_button2 && !right_button2 && cntr >=cntrVal/2){
+		else if(plyr_pos2 == 0xFE && left_button2 && !right_button2){
 			plyr_pos2 = 0x7F;
 			cntr = 0;
 		}
-		else if(right_button2 && !left_button2 && cntr >=cntrVal/2){
+		else if(right_button2 && !left_button2){
 			plyr_pos2 = (plyr_pos2 << 1) | 1;
 			cntr = 0;
 		}
-		else if(!right_button2 && left_button2 && cntr >=cntrVal/2){
+		else if(!right_button2 && left_button2){
 			plyr_pos2 = (plyr_pos2 >> 1) | 0x80;
 			cntr = 0;
 		}
@@ -134,30 +134,28 @@ int alternate_display(int state){
 	static unsigned char i = 0 ;
 	switch(state){
 		case start_disp:
-// 		if (start_button && !game_lost)
-// 		{
 			state = disp_plyr;
-//		}
 		break;
-		
 		case disp_plyr:
 		PORTA = 0x80; //bottom row
 		PORTB = plyr_pos;	
+		PORTC = 0xFF;
 		state = disp_plyr2; 
 		break;
-
 		case disp_plyr2:
 		PORTA = 0x80; //bottom row
-		PORTB = plyr_pos2;	
+		PORTB = 0xFF;
+		PORTC = plyr_pos2;	
 		state = disp_obj;
 		break;
-		
 		case disp_obj:
 		 PORTA = y_pos;
 		 PORTB = x_pos;
-		if (y_pos == 0x80) PORTB = x_pos & plyr_pos;			
-		state = disp_plyr;	
-			i++;
+		 while(i > 3){
+		state = disp_plyr;
+		i = 0;
+		 }
+		 i++;
 		break;
 	}
 	
@@ -169,40 +167,20 @@ static unsigned char selection_led;  //condition to output rows
 	switch(state){
 		case obj_init:
 		selection_led = 0x01;
-
+		x_pos_r1 = rand();
 		state = obj_Matdisp;
 		break;
 		case obj_Matdisp:
-// 		if (selection_led == 1)
-// 		{	
-// 			x_pos = x_pos_r1;
-// 			y_pos = led_rowPos[0];
-// 			currObj = 0;
-// 
-//  		}
-// 		if (selection_led == 2)
-// 		{
-// 			x_pos = 0xFD;
-// 			y_pos = led_rowPos[1];
-// 			currObj = 1;
-
-// 		}
 		if (selection_led == 3)
-		{
-			y_pos = led_rowPos[2];
-			x_pos =  x_pos_r2;
-			currObj = 2;
+		{	
+			x_pos = x_pos_r1;
+			y_pos = led_rowPos[0];
+			currObj = 0;							//indicate 0th object
 
-		}
-// 		if (selection_led == 4)
-// 		{
-// 			x_pos = 0xF7;
-// 			y_pos = led_rowPos[3];
-// 			currObj = 3;
+ 		}
 
-// 		}
 
-		if (selection_led >= 4) selection_led = 1;     //initialize row
+		if (selection_led >= 3) selection_led = 1;     //initialize row
 		else{
 			selection_led++;
 		}
@@ -229,8 +207,15 @@ int shiftled_sm(int state){
 		if (y_pos == 0x80 && !game_lost)
 		{
 			led_rowPos[currObj] = 0x01; //reset position
-			x_pos_r1 = rand() % 8 + 20;
-			x_pos_r2 = rand() % 8 + 30;
+			x_pos_r1 = rand() % 0x3B;
+			for (int i = 0; i < 6 ; i++)
+			{
+				if ((x_pos_r1 & bad_xvals[i]) == x_pos_r1)			//if bad values are selected
+				{
+					x_pos_r1 = x_pos_r1 | ~bad_xvals[i];			//remove those vals
+					break;
+				}
+			}
 			plyr_pos2 = 0xFE;
 		}
 		else if(!game_lost){
@@ -263,20 +248,10 @@ int winLose_checkSM(int state){
 			cntr = 0;
 			
 		}
-		if (((~x_pos | ~plyr_pos) == ~x_pos) && (lives > 0) && cntr >= 35)
+		if (plyr_pos == plyr_pos2)
 		{
-			lives--;
-			cntr = 0;
-			
+			state = gameLost_state;
 		}
-		if ((~x_pos | ~plyr_pos) == ~x_pos)
-		{
-			PORTD = PORTD ^ 0x08;
-		}
-// 		if (plyr_pos == plyr_pos2)
-// 		{
-// 			state = gameLost_state;
-// 		}
 		else if(lives == 0){
 			state = gameLost_state;
 		}
@@ -303,11 +278,11 @@ int main(void)
 	DDRC = 0xFF; PORTC = 0x00;
 	DDRD = 0x08; PORTD = 0xF7;
 	
-	unsigned long int plyr_TaskCalc = 2;
+	unsigned long int plyr_TaskCalc = 130;
 	unsigned long int disp_TaskCalc = 1;
 	unsigned char sftPeriod = 240;
 	unsigned long int tmpGCD = 1;
-	tmpGCD = findGCD(plyr_TaskCalc, disp_TaskCalc);
+//	tmpGCD = findGCD(plyr_TaskCalc, disp_TaskCalc);
 	
 	unsigned long int GCD = tmpGCD;
 	
@@ -319,13 +294,13 @@ int main(void)
 	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 	
 	plyrChar_task.state = init_plyr;
-	plyrChar_task.period = plyr_Period*2;
-	plyrChar_task.elapsedTime = plyr_Period*2;
+	plyrChar_task.period = plyr_Period;
+	plyrChar_task.elapsedTime = plyr_Period;
 	plyrChar_task.TickFct = &playr_char_sm;
 	
 	plyrChar_task2.state = init_plyr2;
-	plyrChar_task2.period = plyr_Period*4;
-	plyrChar_task2.elapsedTime = plyr_Period*4;
+	plyrChar_task2.period = plyr_Period;
+	plyrChar_task2.elapsedTime = plyr_Period;
 	plyrChar_task2.TickFct = &playr_char_sm2;
 	
 	plyrORobj_task.state = start_disp;
@@ -339,17 +314,16 @@ int main(void)
 	dispObj_task.TickFct = &obj_display_sm;
 
 	sftled_task.state = init_sft;
-	sftled_task.period = sftPeriod; //ms
-	sftled_task.elapsedTime = sftPeriod; //ms
+	sftled_task.period = sftPeriod; 
+	sftled_task.elapsedTime = sftPeriod; 
 	sftled_task.TickFct = &shiftled_sm;
 	
 	winlose_check_task.state = check_result;
-	winlose_check_task.period = disp_Period; //ms
-	winlose_check_task.elapsedTime = disp_Period; //ms
+	winlose_check_task.period = disp_Period; 
+	winlose_check_task.elapsedTime = disp_Period; //check every 10 times during sfting
 	winlose_check_task.TickFct = &winLose_checkSM;
-	LCD_init();
-	LCD_ClearScreen();
-	TimerSet(GCD);
+	
+	TimerSet(1);
 	TimerOn();
 	
 	unsigned short i;
